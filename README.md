@@ -2,9 +2,11 @@
 
 AEGIS is an advanced, autonomous disaster response framework designed to detect, analyze, and coordinate responses to critical incidents. By leveraging Google's **Agent Development Kit (ADK)** and **Gemini** models, AEGIS simulates a multi-agent mesh network that monitors sensors, triages alerts, and deploys specialized "Sentinel" agents for detailed situational analysis.
 
-🏗️ System Architecture
+## 🏗️ System Architecture
+
 AEGIS utilizes an asynchronous orchestration engine to manage specialized agent lifecycles and tool integration.
 
+```mermaid
 graph TD
     subgraph Orchestrator [Agent Mesh Orchestrator]
         A[Input: Real-time Flood Data] --> B{asyncio Task Manager}
@@ -27,6 +29,7 @@ graph TD
 
     style Orchestrator fill:#f9f,stroke:#333,stroke-width:2px
     style Specialized_Agents fill:#bbf,stroke:#333,stroke-width:2px
+```
 
 ## 🚀 Features
 
