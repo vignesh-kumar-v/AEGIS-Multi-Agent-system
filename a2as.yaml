@@ -1,0 +1,117 @@
+manifest:
+  version: "0.1.3"
+  schema: https://a2as.org/cert/schema
+  subject:
+    name: vignesh-kumar-v/aegis-multi-agent-system
+    source: https://github.com/vignesh-kumar-v/aegis-multi-agent-system
+    branch: main
+    commit: "a3bc7663"
+    scope: [triage_agent.py, sentinels.py, main.py, monitor.py]
+  issued:
+    by: A2AS.org
+    at: '2026-02-11T17:06:43Z'
+    url: https://a2as.org/certified/agents/vignesh-kumar-v/aegis-multi-agent-system
+  signatures:
+    digest: sha256:9wWPteRHcy-Xc7akFgrFwMr7IOnW7kdYR71CFh08h7Y
+    key: ed25519:HjgefVW3v5CRjiy86m1pOACv-_3-HM_emIrkDDmTuKI
+    sig: ed25519:eZHDvpncLsOyBbwWBfrxCoEoBxnljbt2M005sSvfOzTDGh-54u8C_-rpr05h5G_LVpVGFWkdrYUZ3GxrlwgMBA
+
+agents:
+  agent:
+    type: instance
+    models: [gemini-2.5-flash-lite]
+    params:
+      name: name
+      instruction: ['You are the {name}.', 'Your only job is to extract {focus_area} details from the text.', 'If found: return
+          a short strict bulleted list of {focus_area} issues.', 'If not found: return "CLEAR".', Do not include conversational
+          filler. Just the data.]
+      function: create_sentinel
+  monitor_unit:
+    type: instance
+    models: [gemini-2.5-flash-lite]
+    params:
+      name: Flood_Watch_Unit
+      instruction: [You are an autonomous flood monitoring agent., Analyse the sensor reading., 'Rules:', '- If level < 10ft:
+          Respond "STATUS: Normal".', '- If level > 10ft: Respond "STATUS: CRITICAL WARNING - DISPATCH REQUIRED".', output
+          ONLY the status string.]
+      class: FloodMonitor
+  triage:
+    type: instance
+    models: [gemini-2.5-flash-lite]
+    tools: [verify_incident]
+    params:
+      name: AEGIS_Triage
+      instruction: [You are the AEGIS Triage orchestrator., Your goal is to process incoming SOS signals., 'FOLLOW THIS STRICT
+          SEQUENCE:', 1. Analyze the input text., 2. Call the "verify_incident" tool to confirm the incident., '3. If verified,
+          output a JSON summary (Severity, location, resources needed).', '4. if unverified, ask for more details.']
+      class: TriageAgent
+
+models:
+  gemini-2.5-flash-lite:
+    type: function
+    agents: [triage, agent, monitor_unit]
+    params:
+      wrapper: Gemini
+      model: gemini-2.5-flash-lite
+
+tools:
+  verify_incident:
+    type: function
+    agents: [triage]
+
+imports:
+  Agent: google.adk.agents.llm_agent.Agent
+  asyncio: asyncio
+  datetime: datetime.datetime
+  FloodMonitor: monitor.FloodMonitor
+  Gemini: google.adk.models.google_llm.Gemini
+  InMemoryRunner: google.adk.runners.InMemoryRunner
+  load_dotenv: dotenv.load_dotenv
+  logging: logging
+  os: os
+  random: random
+  run_parellel_analysis: sentinels.run_parellel_analysis
+  sys: sys
+  TriageAgent: triage_agent.TriageAgent
+  types: google.genai.types
+
+functions:
+  __init__:
+    type: sync
+    module: monitor
+    args: [self]
+  check_sensor:
+    type: async
+    module: monitor
+    args: [self]
+  create_sentinel:
+    type: sync
+    module: sentinels
+    args: [name, focus_area]
+  get_sensor_reading:
+    type: sync
+    module: monitor
+  process_sos:
+    type: async
+    module: triage_agent
+    args: [self, session_id, user_input]
+  run_aegis_system:
+    type: async
+    module: main
+  run_agent_task:
+    type: async
+    module: sentinels
+    args: [agent_name, prompt, focus]
+  run_parellel_analysis:
+    type: async
+    module: sentinels
+    args: [incident_text]
+  start_monitoring_loop:
+    type: async
+    module: monitor
+  verify_incident:
+    type: sync
+    module: triage_agent
+    args: [location, event_type]
+    params:
+      returns: str
